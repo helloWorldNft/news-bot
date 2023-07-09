@@ -1,17 +1,20 @@
+import fs from "fs";
+import TelegramBot from "node-telegram-bot-api";
 import { publicGroupId, privateChatId, token, username } from "./config.js";
 
-const TelegramBot = require("node-telegram-bot-api");
-const fs = require("fs");
-
-const config = JSON.parse(fs.readFileSync("config.json", "utf8"));
-const { publicGroupId, privateChatId, token, username } = config;
 const bot = new TelegramBot(token, { polling: true });
+
+bot.on("polling_error", (error) => {
+  console.error(error);
+});
 
 function readUrlsFromFile() {
   try {
     if (fs.existsSync("urls.json")) {
       const data = fs.readFileSync("urls.json", "utf8");
-      return JSON.parse(data);
+      const urls = JSON.parse(data);
+      console.log("Read URLs from file:", urls); // Add a logging statement here
+      return urls;
     } else {
       return { latestTweetUrl: "", latestBlogUrl: "", latestThreadsUrl: "" };
     }
@@ -23,6 +26,7 @@ function readUrlsFromFile() {
 
 function writeUrlsToFile(urls) {
   try {
+    console.log("Writing URLs to file:", urls); // Add a logging statement here
     const data = JSON.stringify(urls);
     fs.writeFileSync("urls.json", data, "utf8");
   } catch (err) {
@@ -34,7 +38,9 @@ function readUsersFromFile() {
   try {
     if (fs.existsSync("users.json")) {
       const data = fs.readFileSync("users.json", "utf8");
-      return JSON.parse(data);
+      const users = JSON.parse(data);
+      console.log("Read users from file:", users); // Add a logging statement here
+      return users;
     } else {
       return [];
     }
@@ -46,6 +52,7 @@ function readUsersFromFile() {
 
 function writeUsersToFile(users) {
   try {
+    console.log("Writing users to file:", users); // Add a logging statement here
     const data = JSON.stringify(users);
     fs.writeFileSync("users.json", data, "utf8");
   } catch (err) {
@@ -63,16 +70,19 @@ let { latestTweetUrl, latestBlogUrl, latestThreadsUrl } = readUrlsFromFile();
 
 // Retrieve the latest tweet, blog post, and threads post URLs
 bot.onText(/\/latesttweet/, (msg) => {
+  console.log("Received /latesttweet command:", msg);
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, latestTweetUrl);
 });
 
 bot.onText(/\/latestblog/, (msg) => {
+  console.log("Received /latestblog command:", msg);
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, latestBlogUrl);
 });
 
 bot.onText(/\/latestthread/, (msg) => {
+  console.log("Received /latestthread command:", msg);
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, latestThreadsUrl);
 });
@@ -131,27 +141,35 @@ bot.onText(/\/start/, (msg) => {
   }
 
   const opts = {
+    parse_mode: "Markdown",
     reply_markup: {
       inline_keyboard: [
         [{ text: "Latest Tweet", callback_data: "latesttweet" }],
-        [{ text: "Latest Blog Post", callback_data: "latestblog" }],
-        [{ text: "Latest Threads Post", callback_data: "latestthreads" }],
+        [{ text: "Latest Blog", callback_data: "latestblog" }],
+        [{ text: "Latest Thread", callback_data: "latestthreads" }],
         [{ text: "Telegram", callback_data: "telegram" }],
-        [{ text: "Preferences", callback_data: "preferences" }],
+        [{ text: "DM Alert Preferences", callback_data: "preferences" }],
       ],
     },
   };
 
-  bot.sendMessage(chatId, "Choose a command:", opts).then((sentMessage) => {
-    lastStartMenuMessageId = sentMessage.message_id;
-  });
+  bot
+    .sendMessage(
+      chatId,
+      "_Ok!_ Here's what you can do:\n\n‣ Click *Latest Tweet*, *Blog* or *Thread* to view hello world's latest\n\n‣ Click *Telegram* and I'll teleport you to the hello world chat 🛸\n\n‣ Click *Preferences* to tell me which alerts you want to receive\n\nTo customize notifications click my pfp > _Notifications_ > _Customize_. If it gets cluttered type `/start` for this menu.\n\n_Thanks for stopping by. But mainly, stay classy._",
+      opts
+    )
+    .then((sentMessage) => {
+      lastStartMenuMessageId = sentMessage.message_id;
+    });
 });
 
-const deletedMessages = new Set(); // Create a new Set to keep track of deleted messages
+const deletedMessages = new Set();
 
 let lastStartMenuMessageId;
 
 bot.on("callback_query", (callbackQuery) => {
+  console.log("Received callback query:", callbackQuery);
   const chatId = callbackQuery.message.chat.id;
   const messageId = callbackQuery.message.message_id;
   const data = callbackQuery.data;
@@ -163,29 +181,25 @@ bot.on("callback_query", (callbackQuery) => {
       opts = {
         reply_markup: {
           inline_keyboard: [
-            [{ text: "Latest Tweet", url: latestTweetUrl }],
-            [{ text: "Back to menu", callback_data: "back_to_menu" }],
+            [{ text: "Latest hello world Tweet", url: latestTweetUrl }],
+            [{ text: "Back to Menu", callback_data: "back_to_menu" }],
           ],
         },
       };
-      bot.sendMessage(
-        chatId,
-        "Click the button below to view the latest tweet:",
-        opts
-      );
+      bot.sendMessage(chatId, "Click below, and like & retweet ffs.", opts);
       break;
     case "latestblog":
       opts = {
         reply_markup: {
           inline_keyboard: [
             [{ text: "Latest Blog Post", url: latestBlogUrl }],
-            [{ text: "Back to menu", callback_data: "back_to_menu" }],
+            [{ text: "Back to Menu", callback_data: "back_to_menu" }],
           ],
         },
       };
       bot.sendMessage(
         chatId,
-        "Click the button below to view the latest blog post:",
+        "Click below to indulge in the soothing prose of the hello world blog...",
         opts
       );
       break;
@@ -193,14 +207,14 @@ bot.on("callback_query", (callbackQuery) => {
       opts = {
         reply_markup: {
           inline_keyboard: [
-            [{ text: "Latest Threads Post", url: latestThreadsUrl }],
-            [{ text: "Back to menu", callback_data: "back_to_menu" }],
+            [{ text: "Latest Thread", url: latestThreadsUrl }],
+            [{ text: "Back to Menu", callback_data: "back_to_menu" }],
           ],
         },
       };
       bot.sendMessage(
         chatId,
-        "Click the button below to view the latest threads post:",
+        "See us on a bad twitter clone, we're there ¯\\_(ツ)_/¯",
         opts
       );
       break;
@@ -209,15 +223,11 @@ bot.on("callback_query", (callbackQuery) => {
         reply_markup: {
           inline_keyboard: [
             [{ text: "Telegram", url: "https://t.me/helloWorldNft" }],
-            [{ text: "Back to menu", callback_data: "back_to_menu" }],
+            [{ text: "Back to Menu", callback_data: "back_to_menu" }],
           ],
         },
       };
-      bot.sendMessage(
-        chatId,
-        "Click the button below to visit our Telegram page:",
-        opts
-      );
+      bot.sendMessage(chatId, "Click below for moonbois and apes:", opts);
       break;
     case "preferences":
       // Find the user's preferences
@@ -247,14 +257,14 @@ bot.on("callback_query", (callbackQuery) => {
                 callback_data: "preference_threadsposts",
               },
             ],
-            [{ text: "Back to menu", callback_data: "back_to_menu" }],
+            [{ text: "Back to Menu", callback_data: "back_to_menu" }],
           ],
         },
       };
 
       bot.sendMessage(
         chatId,
-        "Choose which messages you want to receive:",
+        "Choose which alerts you want to receive 👇",
         opts
       );
       break;
@@ -263,16 +273,15 @@ bot.on("callback_query", (callbackQuery) => {
       if (!deletedMessages.has(messageId)) {
         // Check if the message has already been deleted
         bot.deleteMessage(chatId, messageId);
-        deletedMessages.add(messageId); // Add the messageId to the Set of deleted messages
+        deletedMessages.add(messageId);
       }
 
       opts = {
-        // Assign a new value to the opts variable using the = operator
         reply_markup: {
           inline_keyboard: [
             [{ text: "Latest Tweet", callback_data: "latesttweet" }],
             [{ text: "Latest Blog Post", callback_data: "latestblog" }],
-            [{ text: "Latest Threads Post", callback_data: "latestthreads" }],
+            [{ text: "Latest Thread", callback_data: "latestthreads" }],
             [{ text: "Telegram", callback_data: "telegram" }],
             [{ text: "DM Alert Preferences", callback_data: "preferences" }],
           ],
@@ -286,7 +295,7 @@ bot.on("callback_query", (callbackQuery) => {
       ) {
         // Check if the message has already been deleted
         bot.deleteMessage(chatId, lastStartMenuMessageId);
-        deletedMessages.add(lastStartMenuMessageId); // Add the messageId to the Set of deleted messages
+        deletedMessages.add(lastStartMenuMessageId);
       }
 
       bot.sendMessage(chatId, "Choose a command:", opts).then((sentMessage) => {
@@ -324,11 +333,10 @@ bot.on("callback_query", (callbackQuery) => {
     if (!deletedMessages.has(messageId)) {
       // Check if the message has already been deleted
       bot.deleteMessage(chatId, messageId);
-      deletedMessages.add(messageId); // Add the messageId to the Set of deleted messages
+      deletedMessages.add(messageId);
     }
 
     opts = {
-      // Assign a new value to the opts variable using the = operator
       reply_markup: {
         inline_keyboard: [
           [
@@ -351,7 +359,7 @@ bot.on("callback_query", (callbackQuery) => {
               callback_data: "preference_threadsposts",
             },
           ],
-          [{ text: "Back to menu", callback_data: "back_to_menu" }],
+          [{ text: "Back to Menu", callback_data: "back_to_menu" }],
         ],
       },
     };
@@ -363,59 +371,122 @@ bot.on("callback_query", (callbackQuery) => {
 // Event handler for relaying messages from the private chat to the public group and users
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
+  let text; // Declare the text variable at the top of the function
+  let messageType; // Declare a new variable to keep track of the type of message
+
   if (
     chatId === privateChatId &&
     msg.text &&
     msg.text.startsWith(`@${username}`)
   ) {
+    console.log("Forwarding message:", msg.text); // Add a logging statement here
     // Remove the bot's username from the message
-    const text = msg.text.replace(`@${username}`, "").trim();
+    text = msg.text.replace(`@${username}`, "").trim(); // Assign a value to the text variable
   }
 
   // Check if the message is a tweet URL
-  if (text.startsWith("https://twitter.com/")) {
-    latestTweetUrl = text;
-    writeUrlsToFile({ latestTweetUrl, latestBlogUrl, latestThreadsUrl });
+  if (text && text.startsWith("https://twitter.com/")) {
+    if (text !== latestTweetUrl) {
+      // Only update the latestTweetUrl if it's different from the current URL
+      latestTweetUrl = text;
+      writeUrlsToFile({ latestTweetUrl, latestBlogUrl, latestThreadsUrl });
+      messageType = "tweet"; // Set the messageType variable to "tweet"
+    } else {
+      return; // Don't forward the message if it's the same as the latest URL
+    }
   }
 
   // Check if the message is a blog URL
-  if (text.startsWith("https://mirror.xyz/")) {
-    latestBlogUrl = text;
-    writeUrlsToFile({ latestTweetUrl, latestBlogUrl, latestThreadsUrl });
+  if (text && text.startsWith("https://mirror.xyz/")) {
+    if (text !== latestBlogUrl) {
+      // Only update the latestBlogUrl if it's different from the current URL
+      latestBlogUrl = text;
+      writeUrlsToFile({ latestTweetUrl, latestBlogUrl, latestThreadsUrl });
+      messageType = "blog"; // Set the messageType variable to "blog"
+    } else {
+      return; // Don't forward the message if it's the same as the latest URL
+    }
   }
 
   // Check if the message is a threads URL
-  if (text.startsWith("https://www.threads.net/")) {
-    latestThreadsUrl = text;
-    writeUrlsToFile({ latestTweetUrl, latestBlogUrl, latestThreadsUrl });
+  if (text && text.startsWith("https://www.threads.net/")) {
+    if (text !== latestThreadsUrl) {
+      // Only update the latestThreadsUrl if it's different from the current URL
+      latestThreadsUrl = text;
+      writeUrlsToFile({ latestTweetUrl, latestBlogUrl, latestThreadsUrl });
+      messageType = "thread"; // Set the messageType variable to "thread"
+    } else {
+      return; // Don't forward the message if it's the same as the latest URL
+    }
   }
 
   // Relay the message to the public group
-  bot.sendMessage(publicGroupId, text);
+  if (text) {
+    let message; // Declare a new variable to hold the message
+
+    switch (messageType) {
+      case "tweet":
+        message = `*BREAKING: New Tweet from hello world*\n\n${text}`;
+        break;
+      case "blog":
+        message = `*BREAKING: New Blog Post from hello world*\n\n${text}`;
+        break;
+      case "thread":
+        message = `*BREAKING: New Thread from hello world*\n\n${text}`;
+        break;
+      default:
+        message = text;
+        break;
+    }
+
+    bot.sendMessage(publicGroupId, message, { parse_mode: "Markdown" });
+  }
 
   // Relay the message to all users who have started a DM with the bot and have opted in to receive this type of message
   users.forEach((user) => {
-    if (
-      (!user.preferences && text.startsWith("https://twitter.com/")) ||
-      (user.preferences &&
-        user.preferences.tweets &&
-        text.startsWith("https://twitter.com/"))
-    ) {
-      bot.sendMessage(user.chatId, text);
-    } else if (
-      (!user.preferences && text.startsWith("https://mirror.xyz/")) ||
-      (user.preferences &&
-        user.preferences.blogposts &&
-        text.startsWith("https://mirror.xyz/"))
-    ) {
-      bot.sendMessage(user.chatId, text);
-    } else if (
-      (!user.preferences && text.startsWith("https://www.threads.net/")) ||
-      (user.preferences &&
-        user.preferences.threadsposts &&
-        text.startsWith("https://www.threads.net/"))
-    ) {
-      bot.sendMessage(user.chatId, text);
+    if (user.chatId === privateChatId || user.chatId === publicGroupId) return; // Skip the private chat and public group
+
+    let message; // Declare a new variable to hold the message
+
+    switch (messageType) {
+      case "tweet":
+        if (
+          (!user.preferences && text && text.startsWith("https://twitter.com/")) ||
+          (user.preferences &&
+            user.preferences.tweets &&
+            text &&
+            text.startsWith("https://twitter.com/"))
+        ) {
+          message = `*BREAKING: New Tweet from hello world*\n\n${text}`;
+          bot.sendMessage(user.chatId, message, { parse_mode: "Markdown" });
+        }
+        break;
+      case "blog":
+        if (
+          (!user.preferences && text && text.startsWith("https://mirror.xyz/")) ||
+          (user.preferences &&
+            user.preferences.blogposts &&
+            text &&
+            text.startsWith("https://mirror.xyz/"))
+        ) {
+          message = `*BREAKING: New Blog Post from hello world*\n\n${text}`;
+          bot.sendMessage(user.chatId, message, { parse_mode: "Markdown" });
+        }
+        break;
+      case "thread":
+        if (
+          (!user.preferences && text && text.startsWith("https://www.threads.net/")) ||
+          (user.preferences &&
+            user.preferences.threadsposts &&
+            text &&
+            text.startsWith("https://www.threads.net/"))
+        ) {
+          message = `*BREAKING: New Thread from hello world*\n\n${text}`;
+          bot.sendMessage(user.chatId, message, { parse_mode: "Markdown" });
+        }
+        break;
+      default:
+        break;
     }
   });
 });
