@@ -3,6 +3,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { publicGroupId, privateChatId, token, username } from "./config.js";
 
 const bot = new TelegramBot(token, { polling: true });
+const helloWorldGroupId = -1001859270095;
 
 bot.on("polling_error", (error) => {
   console.error(error);
@@ -13,7 +14,7 @@ function readUrlsFromFile() {
     if (fs.existsSync("urls.json")) {
       const data = fs.readFileSync("urls.json", "utf8");
       const urls = JSON.parse(data);
-      console.log("Read URLs from file:", urls); // Add a logging statement here
+      console.log("Read URLs from file:", urls);
       return urls;
     } else {
       return { latestTweetUrl: "", latestBlogUrl: "", latestThreadsUrl: "" };
@@ -26,7 +27,7 @@ function readUrlsFromFile() {
 
 function writeUrlsToFile(urls) {
   try {
-    console.log("Writing URLs to file:", urls); // Add a logging statement here
+    console.log("Writing URLs to file:", urls);
     const data = JSON.stringify(urls);
     fs.writeFileSync("urls.json", data, "utf8");
   } catch (err) {
@@ -39,7 +40,7 @@ function readUsersFromFile() {
     if (fs.existsSync("users.json")) {
       const data = fs.readFileSync("users.json", "utf8");
       const users = JSON.parse(data);
-      console.log("Read users from file:", users); // Add a logging statement here
+      console.log("Read users from file:", users);
       return users;
     } else {
       return [];
@@ -52,7 +53,7 @@ function readUsersFromFile() {
 
 function writeUsersToFile(users) {
   try {
-    console.log("Writing users to file:", users); // Add a logging statement here
+    console.log("Writing users to file:", users);
     const data = JSON.stringify(users);
     fs.writeFileSync("users.json", data, "utf8");
   } catch (err) {
@@ -90,6 +91,9 @@ bot.onText(/\/latestthread/, (msg) => {
 // Retrieve static links
 bot.onText(/\/telegram/, (msg) => {
   const chatId = msg.chat.id;
+  if (chatId === helloWorldGroupId) {
+    return;
+  }
   bot.sendMessage(chatId, "https://t.me/helloWorldNft");
 });
 
@@ -388,7 +392,7 @@ bot.on("message", (msg) => {
     msg.text &&
     msg.text.startsWith(`@${username}`)
   ) {
-    console.log("Forwarding message:", msg.text); // Add a logging statement here
+    console.log("Forwarding message:", msg.text);
     // Remove the bot's username from the message
     text = msg.text.replace(`@${username}`, "").trim(); // Assign a value to the text variable
   }
