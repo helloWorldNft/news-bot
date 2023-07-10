@@ -96,7 +96,11 @@ bot.onText(/\/telegram/, (msg) => {
 // Event handler for the /preferences command
 bot.onText(/\/preferences/, (msg) => {
   const chatId = msg.chat.id;
-
+  // Check if the chat is a group chat
+  if (msg.chat.type === "group" || msg.chat.type === "supergroup") {
+    // If it is, don't process the command
+    return;
+  }
   // Find the user's preferences
   const user = users.find((user) => user.chatId === chatId);
   if (!user) return;
@@ -132,6 +136,11 @@ bot.onText(/\/preferences/, (msg) => {
 // Event handler for the /start command
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
+  // Check if the chat is a group chat
+  if (msg.chat.type === "group" || msg.chat.type === "supergroup") {
+    // If it is, don't process the command
+    return;
+  }
   if (!users.some((user) => user.chatId === chatId)) {
     users.push({
       chatId,
@@ -451,7 +460,9 @@ bot.on("message", (msg) => {
     switch (messageType) {
       case "tweet":
         if (
-          (!user.preferences && text && text.startsWith("https://twitter.com/")) ||
+          (!user.preferences &&
+            text &&
+            text.startsWith("https://twitter.com/")) ||
           (user.preferences &&
             user.preferences.tweets &&
             text &&
@@ -463,7 +474,9 @@ bot.on("message", (msg) => {
         break;
       case "blog":
         if (
-          (!user.preferences && text && text.startsWith("https://mirror.xyz/")) ||
+          (!user.preferences &&
+            text &&
+            text.startsWith("https://mirror.xyz/")) ||
           (user.preferences &&
             user.preferences.blogposts &&
             text &&
@@ -475,7 +488,9 @@ bot.on("message", (msg) => {
         break;
       case "thread":
         if (
-          (!user.preferences && text && text.startsWith("https://www.threads.net/")) ||
+          (!user.preferences &&
+            text &&
+            text.startsWith("https://www.threads.net/")) ||
           (user.preferences &&
             user.preferences.threadsposts &&
             text &&
