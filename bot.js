@@ -503,6 +503,11 @@ bot.on("message", (msg) => {
   users.forEach((user) => {
     if (user.chatId === privateChatId || user.chatId === publicGroupId) return; // Skip the private chat and public group
 
+    // Check if the message contains the /nofwd command
+    if (text && text.includes("/nofwd")) {
+      return; // Don't forward the message if it contains the /nofwd command
+    }
+
     let message; // Declare a new variable to hold the message
 
     switch (messageType) {
@@ -510,11 +515,13 @@ bot.on("message", (msg) => {
         if (
           (!user.preferences &&
             text &&
-            text.startsWith("https://twitter.com/")) ||
+            (text.startsWith("https://twitter.com/") ||
+              text.startsWith("https://fxtwitter.com/"))) ||
           (user.preferences &&
             user.preferences.tweets &&
             text &&
-            text.startsWith("https://twitter.com/"))
+            (text.startsWith("https://twitter.com/") ||
+              text.startsWith("https://fxtwitter.com/")))
         ) {
           message = `*BREAKING: New Tweet from hello world*\n\n${text}`;
           bot.sendMessage(user.chatId, message, { parse_mode: "Markdown" });
@@ -524,11 +531,13 @@ bot.on("message", (msg) => {
         if (
           (!user.preferences &&
             text &&
-            text.startsWith("https://mirror.xyz/")) ||
+            (text.startsWith("https://mirror.xyz/") ||
+              text.startsWith("https://fxmirror.xyz/"))) ||
           (user.preferences &&
             user.preferences.blogposts &&
             text &&
-            text.startsWith("https://mirror.xyz/"))
+            (text.startsWith("https://mirror.xyz/") ||
+              text.startsWith("https://fxmirror.xyz/")))
         ) {
           message = `*BREAKING: New Blog Post from hello world*\n\n${text}`;
           bot.sendMessage(user.chatId, message, { parse_mode: "Markdown" });
@@ -538,11 +547,13 @@ bot.on("message", (msg) => {
         if (
           (!user.preferences &&
             text &&
-            text.startsWith("https://www.threads.net/")) ||
+            (text.startsWith("https://www.threads.net/") ||
+              text.startsWith("https://www.fxthreads.net/"))) ||
           (user.preferences &&
             user.preferences.threadsposts &&
             text &&
-            text.startsWith("https://www.threads.net/"))
+            (text.startsWith("https://www.threads.net/") ||
+              text.startsWith("https://www.fxthreads.net/")))
         ) {
           message = `*BREAKING: New Thread from hello world*\n\n${text}`;
           bot.sendMessage(user.chatId, message, { parse_mode: "Markdown" });
