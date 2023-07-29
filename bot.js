@@ -424,6 +424,11 @@ bot.on("message", (msg) => {
     text = msg.text.replace(`@${username}`, "").trim(); // Assign a value to the text variable
   }
 
+  // Check if the message contains the /nofwd command
+  if (text && text.includes("/nofwd")) {
+    return; // Don't forward the message if it contains the /nofwd command
+  }
+
   // Check if the message is a tweet URL
   if (
     text &&
