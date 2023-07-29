@@ -97,6 +97,33 @@ bot.onText(/\/telegram/, (msg) => {
   bot.sendMessage(chatId, "https://t.me/helloWorldNft");
 });
 
+// Update the latest link only, do not forward to group & subs
+bot.onText(/\/nofwd (.+)/, (msg, match) => {
+  console.log("Received /nofwd command:", msg);
+  const chatId = msg.chat.id;
+  const url = match[1];
+
+  if (
+    url.startsWith("https://twitter.com/") ||
+    url.startsWith("https://fxtwitter.com/")
+  ) {
+    latestTweetUrl = url;
+  } else if (
+    url.startsWith("https://mirror.xyz/") ||
+    url.startsWith("https://fxmirror.xyz/")
+  ) {
+    latestBlogUrl = url;
+  } else if (
+    url.startsWith("https://www.threads.net/") ||
+    url.startsWith("https://www.fxthreads.net/")
+  ) {
+    latestThreadsUrl = url;
+  }
+
+  writeUrlsToFile({ latestTweetUrl, latestBlogUrl, latestThreadsUrl });
+  bot.sendMessage(chatId, "URL updated!");
+});
+
 // Event handler for the /preferences command
 bot.onText(/\/preferences/, (msg) => {
   const chatId = msg.chat.id;
@@ -398,7 +425,11 @@ bot.on("message", (msg) => {
   }
 
   // Check if the message is a tweet URL
-  if (text && text.startsWith("https://twitter.com/")) {
+  if (
+    text &&
+    (text.startsWith("https://twitter.com/") ||
+      text.startsWith("https://fxtwitter.com/"))
+  ) {
     if (text !== latestTweetUrl) {
       // Only update the latestTweetUrl if it's different from the current URL
       latestTweetUrl = text;
@@ -410,7 +441,11 @@ bot.on("message", (msg) => {
   }
 
   // Check if the message is a blog URL
-  if (text && text.startsWith("https://mirror.xyz/")) {
+  if (
+    text &&
+    (text.startsWith("https://mirror.xyz/") ||
+      text.startsWith("https://fxmirror.xyz/"))
+  ) {
     if (text !== latestBlogUrl) {
       // Only update the latestBlogUrl if it's different from the current URL
       latestBlogUrl = text;
@@ -422,7 +457,11 @@ bot.on("message", (msg) => {
   }
 
   // Check if the message is a threads URL
-  if (text && text.startsWith("https://www.threads.net/")) {
+  if (
+    text &&
+    (text.startsWith("https://www.threads.net/") ||
+      text.startsWith("https://www.fxthreads.net/"))
+  ) {
     if (text !== latestThreadsUrl) {
       // Only update the latestThreadsUrl if it's different from the current URL
       latestThreadsUrl = text;

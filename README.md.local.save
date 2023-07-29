@@ -1,0 +1,6 @@
+
+
+
+
+
+scp -i /home/anon/.ssh/id_rsa_veronickey root@80.78.26.101:/root/.forever/mioF.log .
